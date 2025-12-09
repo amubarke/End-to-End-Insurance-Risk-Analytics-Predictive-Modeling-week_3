@@ -2,7 +2,8 @@
 .venv/
 
 # Ignore data files
-data/
+data/*.csv
+!data/*.dvc
 
 # Ignore Jupyter checkpoint files
 **/.ipynb_checkpoints
