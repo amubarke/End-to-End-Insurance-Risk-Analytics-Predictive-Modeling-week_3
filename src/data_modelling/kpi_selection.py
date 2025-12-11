@@ -2,24 +2,26 @@ import pandas as pd
 import numpy as np
 
 class KPISelector:
+    """
+    Computes KPIs needed for hypothesis testing:
+    - Claim Frequency
+    - Claim Severity
+    - Margin
+    """
+
     def __init__(self, df):
-        self.df = df.copy()
+        self.df = df
 
     def compute_kpis(self):
-        """Create KPIs: claim frequency, claim severity, margin."""
-        df = self.df
+        df = self.df.copy()
 
-        # Claim Frequency
-        df["has_claim"] = df["TotalClaims"].apply(lambda x: 1 if x > 0 else 0)
+        # Claim Frequency: Did a claim occur?
+        df["claim_frequency"] = df["TotalClaims"].apply(lambda x: 1 if x > 0 else 0)
 
-        # Claim Severity (only where claim amount exists)
-        df["claim_severity"] = np.where(
-            (df["TotalClaims"] > 0) & (df["TotalClaimsAmount"] > 0),
-            df["TotalClaimsAmount"] / df["TotalClaims"],
-            np.nan
-        )
+        # Claim Severity: Average claim amount (best available proxy)
+        df["claim_severity"] = df["TotalClaims"].replace(0, np.nan)
 
-        # Margin
-        df["margin"] = df["TotalPremium"] - df["TotalClaimsAmount"].fillna(0)
+        # Margin = Premium - Claims
+        df["margin"] = df["TotalPremium"] - df["TotalClaims"]
 
-        return df[["has_claim", "claim_severity", "margin"]]
+        return df

@@ -1,37 +1,107 @@
-from scipy.stats import chi2_contingency, ttest_ind, f_oneway
-from statsmodels.stats.proportion import proportions_ztest
+import pandas as pd
+import numpy as np
+from scipy.stats import f_oneway, kruskal, mannwhitneyu
 
 class HypothesisTester:
+    """
+    Performs all hypothesis tests for  project:
+    1. Provincial risk differences
+    2. ZIP code risk differences
+    3. ZIP code margin (profit) differences
+    4. Gender-based risk differences
+    """
+
     def __init__(self, df):
         self.df = df.copy()
 
-    # ---------- Chi-square test ----------
-    def chi_square_test(self, feature, kpi):
-        """Chi-square test for categorical variables (frequency)."""
-        contingency = pd.crosstab(self.df[feature], self.df[kpi])
-        chi2, p, dof, expected = chi2_contingency(contingency)
-        return {"p_value": p, "chi2": chi2, "table": contingency}
+    # -------------------------
+    # Utility decision helper
+    # -------------------------
+    def decision(self, p_value, alpha=0.05):
+        return "Reject H₀" if p_value < alpha else "Fail to Reject H₀"
 
-    # ---------- Two-proportion z-test ----------
-    def proportion_test(self, group_a, group_b, kpi_col="has_claim"):
-        """Z-test for two proportions."""
-        count = [group_a[kpi_col].sum(), group_b[kpi_col].sum()]
-        nobs = [len(group_a), len(group_b)]
-        stat, p = proportions_ztest(count, nobs)
-        return {"p_value": p, "statistic": stat}
+    # -------------------------------------------------------------
+    # 1. Risk Differences Across Provinces
+    # -------------------------------------------------------------
+    def test_province_risk_difference(self, target_col="TotalClaims"):
+        df = self.df.copy()
 
-    # ---------- t-test ----------
-    def t_test(self, group_a, group_b, column):
-        """t-test for means (numeric KPI)."""
-        stat, p = ttest_ind(group_a[column].dropna(), group_b[column].dropna())
-        return {"p_value": p, "statistic": stat}
-
-    # ---------- ANOVA ----------
-    def anova_test(self, feature, numeric_col):
-        """ANOVA for numeric KPI across >2 groups."""
+        # Group by province
         groups = [
-            group[numeric_col].dropna()
-            for name, group in self.df.groupby(feature)
+            group[target_col].dropna().values
+            for _, group in df.groupby("Province")
         ]
-        stat, p = f_oneway(*groups)
-        return {"p_value": p, "f_statistic": stat}
+
+        stat, p_value = f_oneway(*groups)
+
+        return {
+            "test": "Province Risk Difference (ANOVA)",
+            "p_value": p_value,
+            "decision": self.decision(p_value),
+            "target_column": target_col
+        }
+
+    # -------------------------------------------------------------
+    # 2. Risk Differences Between ZIP Codes
+    # -------------------------------------------------------------
+    def test_zip_risk_difference(self, target_col="TotalClaims", top_n=10):
+        df = self.df.copy()
+
+        top_zip = df["PostalCode"].value_counts().nlargest(top_n).index
+        df = df[df["PostalCode"].isin(top_zip)]
+
+        groups = [
+            group[target_col].dropna().values
+            for _, group in df.groupby("PostalCode")
+        ]
+
+        stat, p_value = f_oneway(*groups)
+
+        return {
+            "test": "ZIP Code Risk Difference (ANOVA)",
+            "p_value": p_value,
+            "decision": self.decision(p_value),
+            "target_column": target_col
+        }
+
+    # -------------------------------------------------------------
+    # 3. Margin (Profit) Differences Between Zip Codes
+    # -------------------------------------------------------------
+    def test_zip_margin_difference(self, top_n=10):
+        df = self.df.copy()
+
+        df["Margin"] = df["TotalPremium"] - df["TotalClaims"]
+
+        top_zip = df["PostalCode"].value_counts().nlargest(top_n).index
+        df = df[df["PostalCode"].isin(top_zip)]
+
+        groups = [
+            group["Margin"].dropna().values
+            for _, group in df.groupby("PostalCode")
+        ]
+
+        stat, p_value = f_oneway(*groups)
+
+        return {
+            "test": "ZIP Code Margin Difference (ANOVA)",
+            "p_value": p_value,
+            "decision": self.decision(p_value)
+        }
+
+    # -------------------------------------------------------------
+    # 4. Gender-Based Risk Differences
+    # -------------------------------------------------------------
+    def test_gender_risk_difference(self, target_col="TotalClaims"):
+        df = self.df.copy()
+
+        male = df[df["Gender"] == "Male"][target_col].dropna()
+        female = df[df["Gender"] == "Female"][target_col].dropna()
+
+        stat, p_value = mannwhitneyu(male, female)
+
+        return {
+            "test": "Gender Risk Difference (Mann–Whitney U)",
+            "p_value": p_value,
+            "decision": self.decision(p_value),
+            "target_column": target_col
+        }
