@@ -1,131 +1,92 @@
-# Week 3 - End-to-End Insurance Risk Analytics: Interim Report
+# AlphaCare Insurance Solutions – Week 3 Analytics Project
 
-## Overview
-This notebook covers **Week 3** of the End-to-End Insurance Risk Analytics project. The focus is on **data cleaning, exploratory data analysis (EDA), and preliminary insights** from the insurance portfolio.
+## Project Overview
+This project focuses on building predictive models for **motor insurance claims** in South Africa using historical insurance data. The goal is to provide ACIS with actionable insights for **risk management, marketing, and premium pricing** strategies.  
 
-**Objectives:**
-1. Clean the raw insurance dataset.
-2. Perform descriptive statistics, univariate and multivariate analysis.
-3. Visualize financial distributions, outliers, and temporal trends.
-4. Analyze vehicle-level claims and loss ratios.
-5. Prepare insights for predictive modeling in subsequent weeks.
+We develop models to:  
+1. Predict **claim probability** (classification).  
+2. Predict **claim severity** (regression).  
+3. Analyze **feature importance** to inform data-driven business decisions.  
 
 ---
 
-## Project Structure
-
-project_root/
-│
-├── data/
-│ ├── MachineLearningRating_v3.csv # Original raw dataset
-│ ├── cleaned_data.csv # Cleaned dataset after preprocessing
-│ └── Week3_Interim_Report.pdf # Generated PDF report
-│
-├── notebooks/
-│ └── Week3_EDA.ipynb # This notebook
-│
-├── src/
-│ └── data_processing/
-│ ├── data_loader.py # Functions to load CSV/TXT files
-│ ├── data_cleaner.py # Class for cleaning and preprocessing
-│ └── data_summary.py # Class for descriptive statistics and EDA
-│
-└── README.md
-
+## Dataset
+The dataset contains 50+ features for each policy, including:  
+- Policy metadata: `PolicyID`, `TransactionMonth`, `Bank`, `AccountType`, `MaritalStatus`, etc.  
+- Vehicle data: `make`, `Model`, `RegistrationYear`, `VehicleType`, `VehicleAge`, `Cylinders`, `Kilowatts`, etc.  
+- Insurance coverage details: `CoverType`, `CoverGroup`, `TotalPremium`, `SumInsured`, etc.  
+- Claim information: `claim_indicator`, `TotalClaims`.  
 
 ---
 
-## Data Cleaning
+## Analytical Approach
 
-**Steps performed:**
-- Removed empty or irrelevant columns (`NumberOfVehiclesInFleet`).
-- Converted date columns (`TransactionMonth`, `VehicleIntroDate`) to datetime.
-- Converted financial columns (`CapitalOutstanding`, `TermFrequency`) to numeric types.
-- Converted categorical columns (e.g., `PolicyID`, `VehicleType`, `Province`, `CoverType`) to `category`.
-- Filled missing values:
-  - Numerical: median or zero
-  - Categorical: mode or `"Unknown"`
-- Removed duplicate rows.
+### 1. Data Preprocessing
+- Handle missing values, outliers, and inconsistent data.  
+- Encode categorical variables using **OneHotEncoder** or **Target Encoding**.  
+- Scale numeric features as required.  
 
-**Result:** `df_cleaned` ready for analysis.
+### 2. Feature Engineering
+- Derive new features such as `VehicleAge`, `MonthlyPremiumChange`, `ClaimFrequencyPerMonth`.  
+- Keep all features relevant for classification and regression tasks.  
+
+### 3. Exploratory Data Analysis (EDA)
+Key visualizations include:  
+1. Correlation matrix of numeric features  
+2. Premium change vs. claim change  
+3. Top 10 postal codes by claim frequency  
+4. Total claims vs. claims by cover type  
+5. Monthly premium trends for top postal codes  
+6. Loss ratio by province  
+7. Loss ratio by vehicle type  
+8. Loss ratio by gender  
+9. Monthly claim frequency trend  
+10. Monthly claim severity trend for top vehicle models  
+
+> Placeholders are included for visualizations 1–10.  
+
+### 4. Modeling
+**Claim Probability (Classification)**  
+- Models used: Logistic Regression, Random Forest, XGBoost  
+- Train-test split: 80:20  
+- Evaluation metrics: Accuracy, Precision, Recall, F1-score, ROC-AUC  
+
+**Claim Severity (Regression)**  
+- Models used: Linear Regression, Random Forest Regressor, XGBoost Regressor  
+- Train-test split: 80:20  
+- Evaluation metrics: RMSE, MAE, R²  
+
+### 5. Model Interpretability
+- **SHAP** (SHapley Additive exPlanations) used for global and local interpretability.  
+- Feature importance analysis identifies the most influential factors affecting claims and premiums.  
 
 ---
 
-## EDA Highlights
-
-### 1️⃣ Descriptive Statistics
-- Key financial variables analyzed: `TotalPremium`, `TotalClaims`, `CustomValueEstimate`, etc.
-- Outliers detected in `TotalClaims` and `CustomValueEstimate`.
-
-### 2️⃣ Univariate Analysis
-- Histograms and bar charts for numerical and categorical features.
-
-### 3️⃣ Bivariate / Multivariate Analysis
-- Loss Ratio analyzed by `Province`, `VehicleType`, and `Gender`.
-- Vehicle-level claims analyzed for highest and lowest claim amounts.
-
-### 4️⃣ Temporal Analysis
-- Claim frequency and severity trends over 18 months.
-- Insights into seasonality and portfolio exposure.
+## Key Findings
+- **XGBoost** outperforms other models in both classification and regression tasks.  
+- Top features impacting claims include `VehicleAge`, `TotalPremium`, `PostalCode`, `Vehicle Make/Model`, and `CoverType`.  
+- Certain postal codes and older vehicles significantly increase the likelihood and severity of claims.  
+- Gender and vehicle type also influence loss ratios, highlighting opportunities for targeted marketing and premium adjustments.  
 
 ---
 
-## Usage Examples
+## Recommendations
+- Use **XGBoost models** for both claim probability and severity predictions.  
+- Adjust premiums based on `VehicleAge`, `PostalCode`, and `CoverType`.  
+- Target marketing campaigns to low-risk customers identified by the claim probability model.  
+- Monitor high-risk postal codes for potential fraud or risk mitigation.  
 
-**Load Cleaned Data**
-```python
-from src.data_processing.data_loader import load_data
+---
 
-data_path = "../data/cleaned_data.csv"
-df_cleaned = load_data(data_path)
+## Future Work
+- Perform **A/B hypothesis testing** for marketing campaigns and promotional strategies.  
+- Expand models to include additional time-series trends and seasonal effects.  
+- Deploy interactive dashboards for real-time claim prediction and monitoring.  
 
-Generate Loss Ratio Plots
+---
 
-from src.data_processing.data_summary import LossRatioVisualizer
+## Requirements
+Install dependencies using:
 
-viz = LossRatioVisualizer(df_cleaned)
-viz.plot_loss_by_province()
-viz.plot_loss_by_vehicle_type()
-viz.plot_loss_by_gender()
-
-Financial Distribution and Outlier Analysis
-
-from src.data_processing.data_summary import FinancialAnalyzer
-
-analyzer = FinancialAnalyzer(df_cleaned)
-analyzer.plot_distributions(["TotalClaims", "CustomValueEstimate"])
-analyzer.plot_outliers(["TotalClaims", "CustomValueEstimate"])
-
-Vehicle Claim Analysis
-
-from src.data_processing.data_summary import VehicleClaimAnalyzer
-
-vehicle_analyzer = VehicleClaimAnalyzer(df_cleaned, make_col="make", model_col="Model", claim_col="TotalClaims")
-vehicle_analyzer.plot_top_bottom()
-
-Temporal Trend Analysis
-
-from src.data_processing.data_summary import TemporalClaimsAnalyzer
-
-temporal_analyzer = TemporalClaimsAnalyzer(df_cleaned, date_column="TransactionMonth")
-temporal_analyzer.plot_trends()
-
-Output
-
-cleaned_data.csv → Preprocessed dataset for analysis and modeling.
-
-Notes
-
-Missing values in CustomValueEstimate are significant (~78%), consider handling in predictive models.
-
-Outliers in TotalClaims and CustomValueEstimate may affect model performance; consider transformation or capping.
-
-Postal code has been retained but may be aggregated for reporting to reduce plot density.
-
-Next Steps
-
-Feature engineering for modeling: frequency, severity, and vehicle risk features.
-
-Predictive modeling for claims frequency and severity.
-
-Integrate findings into Week 4 risk assessment and forecasting.
+```bash
+pip install -r requirements.txt

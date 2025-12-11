@@ -1,16 +1,19 @@
-class DataSegmenter:
+class ABGrouper:
+    """
+    Splits the dataset into Group A vs Group B for hypothesis testing.
+    Example:
+        Feature: Province
+        Group A = Gauteng
+        Group B = Western Cape
+    """
+
     def __init__(self, df):
-        self.df = df.copy()
+        self.df = df
 
-    def split_ab(self, column, group_a_value, group_b_value):
-        """
-        Split data into A and B groups based on a specific feature.
-        Ensure both groups exist.
-        """
-        group_a = self.df[self.df[column] == group_a_value]
-        group_b = self.df[self.df[column] == group_b_value]
+    def create_groups(self, feature, group_a_value, group_b_value):
+        df = self.df.copy()
 
-        if len(group_a) == 0 or len(group_b) == 0:
-            raise ValueError("One of the groups is empty!")
+        group_a = df[df[feature] == group_a_value]
+        group_b = df[df[feature] == group_b_value]
 
         return group_a, group_b
